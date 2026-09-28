@@ -10,18 +10,23 @@
         input, button { padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; }
         button { background: #28a745; color: white; border: none; cursor: pointer; }
         button.delete-btn { background: #dc3545; padding: 5px 10px; font-size: 12px; }
+        
+        /* 普通链接样式 */
         .link-item { border-bottom: 1px solid #eee; padding: 15px 0; display: flex; justify-content: space-between; align-items: center; }
-        .link-info h3 { margin: 0 0 5px 0; }
-        .link-info a { color: #007bff; text-decoration: none; }
-        .meta-data { font-size: 12px; color: #666; margin-top: 5px; }
-        #searchBox { width: 100%; box-sizing: border-box; font-size: 16px; padding: 12px; border: 2px solid #007bff; }
-		.link-item.important {
+        
+        /* 重要链接样式：加粗蓝色边框和浅蓝背景 */
+        .link-item.important {
             border: 2px solid #007bff;
             background-color: #f8fbff;
             padding: 15px;
             border-radius: 6px;
             margin-bottom: 10px;
         }
+
+        .link-info h3 { margin: 0 0 5px 0; }
+        .link-info a { color: #007bff; text-decoration: none; }
+        .meta-data { font-size: 12px; color: #666; margin-top: 5px; }
+        #searchBox { width: 100%; box-sizing: border-box; font-size: 16px; padding: 12px; border: 2px solid #007bff; }
     </style>
 </head>
 <body>
@@ -38,11 +43,10 @@
         <input type="url" id="linkUrl" placeholder="https://..." required>
         <input type="text" id="userName" placeholder="Your Name" required>
         
-        <!-- 改成了更直观的勾选框 -->
         <div style="margin: 10px 0; font-size: 14px;">
             <label style="cursor: pointer; display: flex; align-items: center; gap: 6px; user-select: none;">
                 <input type="checkbox" id="linkImportant" style="width: 16px; height: 16px; cursor: pointer;">
-                ⭐ Mark as Important (Pin to top)
+                Mark as Important (Pin to top)
             </label>
         </div>
 
@@ -89,7 +93,7 @@
                 const date = new Date(link.created_at).toLocaleString('en-US');
                 const div = document.createElement('div');
                 
-                // 如果 priority 大于 0（即勾选了重要），就加上 important 这个样式边框
+                // 勾选了重要（priority > 0）的会自动加上蓝色边框样式
                 const isImportant = link.priority > 0;
                 div.className = isImportant ? 'link-item important' : 'link-item';
 
@@ -106,7 +110,8 @@
         }
 
         function filterLinks() {
-            const keyword = document.getElementById('searchBox'].value.toLowerCase();
+            // 已修复这里的括号错误
+            const keyword = document.getElementById('searchBox').value.toLowerCase();
             const filtered = allLinks.filter(link => 
                 link.name.toLowerCase().includes(keyword)
             );
@@ -118,7 +123,6 @@
             const url = document.getElementById('linkUrl').value.trim();
             const user = document.getElementById('userName').value.trim();
             
-            // 如果勾选了，priority 自动设为 10（排最前）；没勾选则是 0（按 ABC 排序）
             const isImportant = document.getElementById('linkImportant').checked;
             const priority = isImportant ? 10 : 0;
 
