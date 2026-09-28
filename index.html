@@ -15,6 +15,13 @@
         .link-info a { color: #007bff; text-decoration: none; }
         .meta-data { font-size: 12px; color: #666; margin-top: 5px; }
         #searchBox { width: 100%; box-sizing: border-box; font-size: 16px; padding: 12px; border: 2px solid #007bff; }
+		.link-item.important {
+            border: 2px solid #007bff;
+            background-color: #f8fbff;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -25,16 +32,25 @@
         <input type="text" id="searchBox" placeholder="🔍 Type a name to search..." oninput="filterLinks()">
     </div>
 
-   <div class="card">
+    <div class="card">
         <h3>➕ Add New Link</h3>
         <input type="text" id="linkName" placeholder="System Name (e.g., HR Portal)" required>
         <input type="url" id="linkUrl" placeholder="https://..." required>
         <input type="text" id="userName" placeholder="Your Name" required>
-        <!-- 新增：重要级别输入框，数字越大越靠前 -->
-        <div style="margin: 5px 0; font-size: 13px; color: #666;">
-            Priority (Higher number = shows higher up): <input type="number" id="linkPriority" value="0" style="width: 80px; padding: 5px;">
+        
+        <!-- 改成了更直观的勾选框 -->
+        <div style="margin: 10px 0; font-size: 14px;">
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 6px; user-select: none;">
+                <input type="checkbox" id="linkImportant" style="width: 16px; height: 16px; cursor: pointer;">
+                ⭐ Mark as Important (Pin to top)
+            </label>
         </div>
+
         <button onclick="addLink()">Add Link</button>
+    </div>
+
+    <div class="card" id="linksContainer">
+        <p>Loading...</p>
     </div>
 
     <script>
@@ -45,7 +61,6 @@
         let allLinks = [];
 
         async function fetchLinks() {
-            // 从数据库拉取数据，先按 priority 从大到小排，再按 name 字母 (A-Z) 排
             const { data, error } = await supabaseClient
                 .from('company_links')
                 .select('*')
@@ -73,10 +88,14 @@
             links.forEach(link => {
                 const date = new Date(link.created_at).toLocaleString('en-US');
                 const div = document.createElement('div');
-                div.className = 'link-item';
+                
+                // 如果 priority 大于 0（即勾选了重要），就加上 important 这个样式边框
+                const isImportant = link.priority > 0;
+                div.className = isImportant ? 'link-item important' : 'link-item';
+
                 div.innerHTML = `
                     <div class="link-info">
-                        <h3>${link.name} ${link.priority > 0 ? '⭐' : ''}</h3>
+                        <h3>${link.name}</h3>
                         <a href="${link.url}" target="_blank">${link.url}</a>
                         <div class="meta-data">👤 Added by: <b>${link.created_by}</b> | 🕒 Time: ${date}</div>
                     </div>
@@ -87,7 +106,7 @@
         }
 
         function filterLinks() {
-            const keyword = document.getElementById('searchBox').value.toLowerCase();
+            const keyword = document.getElementById('searchBox'].value.toLowerCase();
             const filtered = allLinks.filter(link => 
                 link.name.toLowerCase().includes(keyword)
             );
@@ -98,7 +117,10 @@
             const name = document.getElementById('linkName').value.trim();
             const url = document.getElementById('linkUrl').value.trim();
             const user = document.getElementById('userName').value.trim();
-            const priority = parseInt(document.getElementById('linkPriority').value) || 0;
+            
+            // 如果勾选了，priority 自动设为 10（排最前）；没勾选则是 0（按 ABC 排序）
+            const isImportant = document.getElementById('linkImportant').checked;
+            const priority = isImportant ? 10 : 0;
 
             if (!name || !url || !user) {
                 alert("Please fill in all fields!");
@@ -115,7 +137,7 @@
                 document.getElementById('linkName').value = '';
                 document.getElementById('linkUrl').value = '';
                 document.getElementById('userName').value = '';
-                document.getElementById('linkPriority').value = '0';
+                document.getElementById('linkImportant').checked = false;
                 fetchLinks(); 
             }
         }
