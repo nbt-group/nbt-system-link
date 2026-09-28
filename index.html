@@ -37,19 +37,13 @@
         <input type="text" id="searchBox" placeholder="🔍 Type a name to search..." oninput="filterLinks()">
     </div>
 
+    <!-- 已经移除了底部的勾选框，界面清爽干净 -->
     <div class="card">
         <h3>➕ Add New Link</h3>
         <input type="text" id="linkName" placeholder="System Name (e.g., HR Portal)" required>
         <input type="url" id="linkUrl" placeholder="https://..." required>
         <input type="text" id="userName" placeholder="Your Name" required>
-        
-        <div style="margin: 10px 0; font-size: 14px;">
-            <label style="cursor: pointer; display: flex; align-items: center; gap: 6px; user-select: none;">
-                <input type="checkbox" id="linkImportant" style="width: 16px; height: 16px; cursor: pointer;">
-                Mark as Important (Pin to top)
-            </label>
-        </div>
-
+        <br>
         <button onclick="addLink()">Add Link</button>
     </div>
 
@@ -93,7 +87,6 @@
                 const date = new Date(link.created_at).toLocaleString('en-US');
                 const div = document.createElement('div');
                 
-                // 勾选了重要（priority > 0）的会自动加上蓝色边框样式
                 const isImportant = link.priority > 0;
                 div.className = isImportant ? 'link-item important' : 'link-item';
 
@@ -103,14 +96,18 @@
                         <a href="${link.url}" target="_blank">${link.url}</a>
                         <div class="meta-data">👤 Added by: <b>${link.created_by}</b> | 🕒 Time: ${date}</div>
                     </div>
-                    <button class="delete-btn" onclick="deleteLink('${link.id}')">Delete</button>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button style="background: ${link.priority > 0 ? '#6c757d' : '#ffc107'}; color: ${link.priority > 0 ? 'white' : 'black'}; padding: 5px 10px; font-size: 12px; border: none; border-radius: 4px; cursor: pointer;" onclick="toggleImportant('${link.id}', ${link.priority})">
+                            ${link.priority > 0 ? 'Unpin' : '⭐ Pin'}
+                        </button>
+                        <button class="delete-btn" onclick="deleteLink('${link.id}')">Delete</button>
+                    </div>
                 `;
                 container.appendChild(div);
             });
         }
 
         function filterLinks() {
-            // 已修复这里的括号错误
             const keyword = document.getElementById('searchBox').value.toLowerCase();
             const filtered = allLinks.filter(link => 
                 link.name.toLowerCase().includes(keyword)
@@ -123,8 +120,8 @@
             const url = document.getElementById('linkUrl').value.trim();
             const user = document.getElementById('userName').value.trim();
             
-            const isImportant = document.getElementById('linkImportant').checked;
-            const priority = isImportant ? 10 : 0;
+            // 默认新添加的优先级为 0（普通）
+            const priority = 0;
 
             if (!name || !url || !user) {
                 alert("Please fill in all fields!");
@@ -141,7 +138,22 @@
                 document.getElementById('linkName').value = '';
                 document.getElementById('linkUrl').value = '';
                 document.getElementById('userName').value = '';
-                document.getElementById('linkImportant').checked = false;
+                fetchLinks(); 
+            }
+        }
+
+        // 切换重要/置顶状态的函数
+        async function toggleImportant(id, currentPriority) {
+            const newPriority = currentPriority > 0 ? 0 : 10;
+
+            const { error } = await supabaseClient
+                .from('company_links')
+                .update({ priority: newPriority })
+                .eq('id', id);
+
+            if (error) {
+                alert("Failed to update: " + error.message);
+            } else {
                 fetchLinks(); 
             }
         }
